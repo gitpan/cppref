@@ -1,0 +1,28 @@
+---
+abstract: 'man-style access to cppreference.com documents (using w3m)'
+author:
+  - 'Copyright (c) 2009 Kazuho Oku  All rights reserved'
+build_requires:
+  ExtUtils::MakeMaker: 6.42
+configure_requires:
+  ExtUtils::MakeMaker: 6.42
+  File::Slurp: 0
+  Module::Install::ReadmeFromPod: 0
+distribution_type: module
+generated_by: 'Module::Install version 0.91'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: cppref
+no_index:
+  directory:
+    - doc
+    - inc
+    - t
+  orig: []
+requires:
+  File::ShareDir: 0
+resources:
+  license: http://dev.perl.org/licenses/
+version: 0.01

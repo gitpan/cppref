@@ -1,3 +1,4 @@
+Changes
 cppref
 fetchall.pl
 inc/ExtUtils/MakeMaker.pm
@@ -635,6 +636,5 @@ orig/string/string_constructors.html
 orig/string/string_operators.html
 orig/string/substr.html
 orig/string/swap.html
-README
 t/00base.t
 tidy.pl

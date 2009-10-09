@@ -8,7 +8,7 @@ configure_requires:
   ExtUtils::MakeMaker: 6.42
   File::Slurp: 0
   Module::Install::ReadmeFromPod: 0
-distribution_type: module
+distribution_type: script
 generated_by: 'Module::Install version 0.91'
 license: perl
 meta-spec:
@@ -23,6 +23,7 @@ no_index:
   orig: []
 requires:
   File::ShareDir: 0
+  perl: 5.8.0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.02
+version: 0.03

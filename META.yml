@@ -1,7 +1,7 @@
 ---
 abstract: 'man-style access to cppreference.com documents (using w3m)'
 author:
-  - 'Copyright (c) 2009 Kazuho Oku  All rights reserved'
+  - 'Kazuho Oku'
 build_requires:
   ExtUtils::MakeMaker: 6.42
 configure_requires:
@@ -26,4 +26,4 @@ requires:
   perl: 5.8.0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.05
+version: 0.06

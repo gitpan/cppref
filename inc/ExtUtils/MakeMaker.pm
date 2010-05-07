@@ -1,41 +1,43 @@
 #line 1
-# $Id$
+# $Id: /mirror/svn.schwern.org/CPAN/ExtUtils-MakeMaker/trunk/lib/ExtUtils/MakeMaker.pm 41145 2007-12-08T01:01:11.051959Z schwern  $
 package ExtUtils::MakeMaker;
 
-use strict;
-
-BEGIN {require 5.006;}
+BEGIN {require 5.005_03;}
 
 require Exporter;
 use ExtUtils::MakeMaker::Config;
 use Carp ();
 use File::Path;
 
-our $Verbose = 0;       # exported
-our @Parent;            # needs to be localized
-our @Get_from_Config;   # referenced by MM_Unix
-our @MM_Sections;
-our @Overridable;
-my @Prepend_parent;
-my %Recognized_Att_Keys;
+use vars qw(
+            @ISA @EXPORT @EXPORT_OK
+            $VERSION $Verbose %Config
+            @Prepend_parent @Parent
+            %Recognized_Att_Keys @Get_from_Config @MM_Sections @Overridable
+            $Filename
+           );
 
-our $VERSION = '6.54';
+# Has to be on its own line with no $ after it to avoid being noticed by
+# the version control system
+use vars qw($Revision);
+use strict;
 
-# Emulate something resembling CVS $Revision$
-(our $Revision = $VERSION) =~ s{_}{};
-$Revision = int $Revision * 10000;
+$VERSION = '6.42';
+($Revision) = q$Revision: 41145 $ =~ /Revision:\s+(\S+)/;
 
-our $Filename = __FILE__;   # referenced outside MakeMaker
-
-our @ISA = qw(Exporter);
-our @EXPORT    = qw(&WriteMakefile &writeMakefile $Verbose &prompt);
-our @EXPORT_OK = qw($VERSION &neatvalue &mkbootstrap &mksymlists
-                    &WriteEmptyMakefile);
+@ISA = qw(Exporter);
+@EXPORT = qw(&WriteMakefile &writeMakefile $Verbose &prompt);
+@EXPORT_OK = qw($VERSION &neatvalue &mkbootstrap &mksymlists
+                &WriteEmptyMakefile);
 
 # These will go away once the last of the Win32 & VMS specific code is 
 # purged.
 my $Is_VMS     = $^O eq 'VMS';
 my $Is_Win32   = $^O eq 'MSWin32';
+
+# Our filename for diagnostic and debugging purposes.  More reliable
+# than %INC (think caseless filesystems)
+$Filename = __FILE__;
 
 full_setup();
 
@@ -44,7 +46,7 @@ require ExtUtils::MM;  # Things like CPAN assume loading ExtUtils::MakeMaker
 
 require ExtUtils::MY;  # XXX pre-5.8 versions of ExtUtils::Embed expect
                        # loading ExtUtils::MakeMaker will give them MY.
-                       # This will go when Embed is its own CPAN module.
+                       # This will go when Embed is it's own CPAN module.
 
 
 sub WriteMakefile {
@@ -82,14 +84,11 @@ my %Special_Sigs = (
  LIBS               => ['ARRAY',''],
  MAN1PODS           => 'HASH',
  MAN3PODS           => 'HASH',
- META_ADD           => 'HASH',
- META_MERGE         => 'HASH',
  PL_FILES           => 'HASH',
  PM                 => 'HASH',
  PMLIBDIRS          => 'ARRAY',
  PMLIBPARENTDIRS    => 'ARRAY',
  PREREQ_PM          => 'HASH',
- CONFIGURE_REQUIRES => 'HASH',
  SKIP               => 'ARRAY',
  TYPEMAPS           => 'ARRAY',
  XS                 => 'HASH',
@@ -124,7 +123,7 @@ sub _verify_att {
 
         my @sigs   = ref $sig ? @$sig : $sig;
         my $given  = ref $val;
-        unless( grep { _is_of_type($val, $_) } @sigs ) {
+        unless( grep { $given eq $_ || ($_ && eval{$val->isa($_)}) } @sigs ) {
             my $takes = join " or ", map { _format_att($_) } @sigs;
 
             my $has = _format_att($given);
@@ -132,19 +131,6 @@ sub _verify_att {
                  "         Please inform the author.\n";
         }
     }
-}
-
-
-# Check if a given thing is a reference or instance of $type
-sub _is_of_type {
-    my($thing, $type) = @_;
-
-    return 1 if ref $thing eq $type;
-
-    local $SIG{__DIE__};
-    return 1 if eval{ $thing->isa($type) };
-
-    return 0;
 }
 
 
@@ -158,7 +144,7 @@ sub _format_att {
 }
 
 
-sub prompt ($;$) {  ## no critic
+sub prompt ($;$) {
     my($mess, $def) = @_;
     Carp::confess("prompt function called without an argument") 
         unless defined $mess;
@@ -234,9 +220,8 @@ sub full_setup {
     my @attrib_help = qw/
 
     AUTHOR ABSTRACT ABSTRACT_FROM BINARY_LOCATION
-    C CAPI CCFLAGS CONFIG CONFIGURE DEFINE DIR DISTNAME DISTVNAME
-    DL_FUNCS DL_VARS
-    EXCLUDE_EXT EXE_FILES FIRST_MAKEFILE
+    C CAPI CCFLAGS CONFIG CONFIGURE DEFINE DIR DISTNAME DL_FUNCS DL_VARS
+    EXCLUDE_EXT EXE_FILES EXTRA_META FIRST_MAKEFILE
     FULLPERL FULLPERLRUN FULLPERLRUNINST
     FUNCLIST H IMPORTS
 
@@ -255,11 +240,10 @@ sub full_setup {
     SITELIBEXP      SITEARCHEXP 
 
     INC INCLUDE_EXT LDFROM LIB LIBPERL_A LIBS LICENSE
-    LINKTYPE MAKE MAKEAPERL MAKEFILE MAKEFILE_OLD MAN1PODS MAN3PODS MAP_TARGET
-    META_ADD META_MERGE MIN_PERL_VERSION CONFIGURE_REQUIRES
+    LINKTYPE MAKE MAKEAPERL MAKEFILE MAKEFILE_OLD MAN1PODS MAN3PODS MAP_TARGET 
     MYEXTLIB NAME NEEDS_LINKING NOECHO NO_META NORECURS NO_VC OBJECT OPTIMIZE 
     PERL_MALLOC_OK PERL PERLMAINCC PERLRUN PERLRUNINST PERL_CORE
-    PERL_SRC PERM_DIR PERM_RW PERM_RWX
+    PERL_SRC PERM_RW PERM_RWX
     PL_FILES PM PM_FILTER PMLIBDIRS PMLIBPARENTDIRS POLLUTE PPM_INSTALL_EXEC
     PPM_INSTALL_SCRIPT PREREQ_FATAL PREREQ_PM PREREQ_PRINT PRINT_PREREQ
     SIGN SKIP TYPEMAPS VERSION VERSION_FROM XS XSOPT XSPROTOARG
@@ -309,7 +293,7 @@ sub full_setup {
     @Overridable = @MM_Sections;
     push @Overridable, qw[
 
- libscan makeaperl needs_linking
+ libscan makeaperl needs_linking perm_rw perm_rwx
  subdir_x test_via_harness test_via_script 
 
  init_VERSION init_dist init_INST init_INSTALL init_DEST init_dirscan
@@ -392,22 +376,14 @@ sub new {
 
     if ("@ARGV" =~ /\bPREREQ_PRINT\b/) {
         require Data::Dumper;
-        my @what = ('PREREQ_PM');
-        push @what, 'MIN_PERL_VERSION' if $self->{MIN_PERL_VERSION};
-        print Data::Dumper->Dump([@{$self}{@what}], \@what);
+        print Data::Dumper->Dump([$self->{PREREQ_PM}], [qw(PREREQ_PM)]);
         exit 0;
     }
 
     # PRINT_PREREQ is RedHatism.
     if ("@ARGV" =~ /\bPRINT_PREREQ\b/) {
-        my @prereq =
-            map { [$_, $self->{PREREQ_PM}{$_}] } keys %{$self->{PREREQ_PM}};
-        if ( $self->{MIN_PERL_VERSION} ) {
-            push @prereq, ['perl' => $self->{MIN_PERL_VERSION}];
-        }
-
-        print join(" ", map { "perl($_->[0])>=$_->[1] " }
-                        sort { $a->[0] cmp $b->[0] } @prereq), "\n";
+        print join(" ", map { "perl($_)>=$self->{PREREQ_PM}->{$_} " } 
+                        sort keys %{$self->{PREREQ_PM}}), "\n";
         exit 0;
    }
 
@@ -420,53 +396,23 @@ sub new {
 
     check_hints($self);
 
-    # Translate X.Y.Z to X.00Y00Z
-    if( defined $self->{MIN_PERL_VERSION} ) {
-        $self->{MIN_PERL_VERSION} =~ s{ ^ (\d+) \. (\d+) \. (\d+) $ }
-                                      {sprintf "%d.%03d%03d", $1, $2, $3}ex;
-    }
-
-    my $perl_version_ok = eval {
-        local $SIG{__WARN__} = sub { 
-            # simulate "use warnings FATAL => 'all'" for vintage perls
-            die @_;
-        };
-        !$self->{MIN_PERL_VERSION} or $self->{MIN_PERL_VERSION} <= $]
-    };
-    if (!$perl_version_ok) {
-        if (!defined $perl_version_ok) {
-            warn <<'END';
-Warning: MIN_PERL_VERSION is not in a recognized format.
-Recommended is a quoted numerical value like '5.005' or '5.008001'.
-END
-        }
-        elsif ($self->{PREREQ_FATAL}) {
-            die sprintf <<"END", $self->{MIN_PERL_VERSION}, $];
-MakeMaker FATAL: perl version too low for this distribution.
-Required is %s. We run %s.
-END
-        }
-        else {
-            warn sprintf
-                "Warning: Perl version %s or higher required. We run %s.\n",
-                $self->{MIN_PERL_VERSION}, $];
-        }
-    }
-
     my %configure_att;         # record &{$self->{CONFIGURE}} attributes
     my(%initial_att) = %$self; # record initial attributes
 
     my(%unsatisfied) = ();
     foreach my $prereq (sort keys %{$self->{PREREQ_PM}}) {
-        my $installed_file = MM->_installed_file_for_module($prereq);
-        my $pr_version = 0;
-        $pr_version = MM->parse_version($installed_file) if $installed_file;
-        $pr_version = 0 if $pr_version eq 'undef';
+        # 5.8.0 has a bug with require Foo::Bar alone in an eval, so an
+        # extra statement is a workaround.
+        my $file = "$prereq.pm";
+        $file =~ s{::}{/}g;
+        eval { require $file };
+
+        my $pr_version = $prereq->VERSION || 0;
 
         # convert X.Y_Z alpha version #s to X.YZ for easier comparisons
         $pr_version =~ s/(\d+)\.(\d+)_(\d+)/$1.$2$3/;
 
-        if (!$installed_file) {
+        if ($@) {
             warn sprintf "Warning: prerequisite %s %s not found.\n", 
               $prereq, $self->{PREREQ_PM}{$prereq} 
                    unless $self->{PREREQ_FATAL};
@@ -509,19 +455,19 @@ END
     my $newclass = ++$PACKNAME;
     local @Parent = @Parent;    # Protect against non-local exits
     {
+        no strict 'refs';
         print "Blessing Object into class [$newclass]\n" if $Verbose>=2;
         mv_all_methods("MY",$newclass);
         bless $self, $newclass;
         push @Parent, $self;
         require ExtUtils::MY;
-
-        no strict 'refs';   ## no critic;
         @{"$newclass\:\:ISA"} = 'MM';
     }
 
     if (defined $Parent[-2]){
         $self->{PARENT} = $Parent[-2];
-        for my $key (@Prepend_parent) {
+        my $key;
+        for $key (@Prepend_parent) {
             next unless defined $self->{PARENT}{$key};
 
             # Don't stomp on WriteMakefile() args.
@@ -583,10 +529,30 @@ END
     $self->init_linker;
     $self->init_ABSTRACT;
 
-    $self->arch_check(
-        $INC{'Config.pm'},
-        $self->catfile($Config{'archlibexp'}, "Config.pm")
-    );
+    if (! $self->{PERL_SRC} ) {
+        require VMS::Filespec if $Is_VMS;
+        my($pthinks) = $self->canonpath($INC{'Config.pm'});
+        my($cthinks) = $self->catfile($Config{'archlibexp'},'Config.pm');
+        $pthinks = VMS::Filespec::vmsify($pthinks) if $Is_VMS;
+        if ($pthinks ne $cthinks &&
+            !($Is_Win32 and lc($pthinks) eq lc($cthinks))) {
+            print "Have $pthinks expected $cthinks\n";
+            if ($Is_Win32) {
+                $pthinks =~ s![/\\]Config\.pm$!!i; $pthinks =~ s!.*[/\\]!!;
+            }
+            else {
+                $pthinks =~ s!/Config\.pm$!!; $pthinks =~ s!.*/!!;
+            }
+            print STDOUT <<END unless $self->{UNINSTALLED_PERL};
+Your perl and your Config.pm seem to have different ideas about the 
+architecture they are running on.
+Perl thinks: [$pthinks]
+Config says: [$Config{archname}]
+This may or may not cause problems. Please check your installation of perl 
+if you have problems building this extension.
+END
+        }
+    }
 
     $self->init_others();
     $self->init_platform();
@@ -641,7 +607,8 @@ END
     }
 
     # turn the SKIP array into a SKIPHASH hash
-    for my $skip (@{$self->{SKIP} || []}) {
+    my (%skip,$skip);
+    for $skip (@{$self->{SKIP} || []}) {
         $self->{SKIPHASH}{$skip} = 1;
     }
     delete $self->{SKIP}; # free memory
@@ -696,8 +663,8 @@ sub WriteEmptyMakefile {
     if ( -f $new ) {
         _rename($new, $old) or warn "rename $new => $old: $!"
     }
-    open my $mfh, '>', $new or die "open $new for write: $!";
-    print $mfh <<'EOP';
+    open MF, '>'.$new or die "open $new for write: $!";
+    print MF <<'EOP';
 all :
 
 clean :
@@ -709,31 +676,8 @@ makemakerdflt :
 test :
 
 EOP
-    close $mfh or die "close $new for write: $!";
+    close MF or die "close $new for write: $!";
 }
-
-
-#line 728
-
-sub _installed_file_for_module {
-    my $class  = shift;
-    my $prereq = shift;
-
-    my $file = "$prereq.pm";
-    $file =~ s{::}{/}g;
-
-    my $path;
-    for my $dir (@INC) {
-        my $tmp = File::Spec->catfile($dir, $file);
-        if ( -r $tmp ) {
-            $path = $tmp;
-            last;
-        }
-    }
-
-    return $path;
-}
-
 
 sub check_manifest {
     print STDOUT "Checking if your kit is complete...\n";
@@ -851,7 +795,7 @@ sub check_hints {
 }
 
 sub _run_hintfile {
-    our $self;
+    no strict 'vars';
     local($self) = shift;       # make $self available to the hint file.
     my($hint_file) = shift;
 
@@ -870,6 +814,8 @@ sub _run_hintfile {
 
 sub mv_all_methods {
     my($from,$to) = @_;
+    no strict 'refs';
+    my($symtab) = \%{"${from}::"};
 
     # Here you see the *current* list of methods that are overridable
     # from Makefile.PL via MY:: subroutines. As of VERSION 5.07 I'm
@@ -892,23 +838,19 @@ sub mv_all_methods {
 
         next unless defined &{"${from}::$method"};
 
-        {
-            no strict 'refs';   ## no critic
-            *{"${to}::$method"} = \&{"${from}::$method"};
+        *{"${to}::$method"} = \&{"${from}::$method"};
 
-            # If we delete a method, then it will be undefined and cannot
-            # be called.  But as long as we have Makefile.PLs that rely on
-            # %MY:: being intact, we have to fill the hole with an
-            # inheriting method:
+        # delete would do, if we were sure, nobody ever called
+        # MY->makeaperl directly
 
-            {
-                package MY;
-                my $super = "SUPER::".$method;
-                *{$method} = sub {
-                    shift->$super(@_);
-                };
-            }
-        }
+        # delete $symtab->{$method};
+
+        # If we delete a method, then it will be undefined and cannot
+        # be called.  But as long as we have Makefile.PLs that rely on
+        # %MY:: being intact, we have to fill the hole with an
+        # inheriting method:
+
+        eval "package MY; sub $method { shift->SUPER::$method(\@_); }";
     }
 
     # We have to clean out %INC also, because the current directory is
@@ -957,19 +899,20 @@ sub skipcheck {
 
 sub flush {
     my $self = shift;
+    my($chunk);
+    local *FH;
 
     my $finalname = $self->{MAKEFILE};
     print STDOUT "Writing $finalname for $self->{NAME}\n";
 
     unlink($finalname, "MakeMaker.tmp", $Is_VMS ? 'Descrip.MMS' : ());
-    open(my $fh,">", "MakeMaker.tmp")
-        or die "Unable to open MakeMaker.tmp: $!";
+    open(FH,">MakeMaker.tmp") or die "Unable to open MakeMaker.tmp: $!";
 
-    for my $chunk (@{$self->{RESULT}}) {
-        print $fh "$chunk\n";
+    for $chunk (@{$self->{RESULT}}) {
+        print FH "$chunk\n";
     }
 
-    close $fh;
+    close FH;
     _rename("MakeMaker.tmp", $finalname) or
       warn "rename MakeMaker.tmp => $finalname: $!";
     chmod 0644, $finalname unless $Is_VMS;
@@ -1066,4 +1009,4 @@ sub selfdocument {
 
 __END__
 
-#line 2780
+#line 2640

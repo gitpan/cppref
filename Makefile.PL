@@ -20,11 +20,11 @@ requires 'File::ShareDir';
 
 install_script 'cppref';
 mkdir 'doc';
+do 'tools/tidy.pl';
 install_share 'doc';
 
 auto_include;
-auto_install;
+# auto_install;
 
 WriteAll;
 
-do 'tidy.pl';
